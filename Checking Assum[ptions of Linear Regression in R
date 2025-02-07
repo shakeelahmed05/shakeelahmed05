@@ -1,0 +1,56 @@
+library(readr)
+heart <- read_csv("C:/Users/shakahme/Downloads/heart.csv")
+##Heart data can be downloaded from Kaggle
+summary(heart)
+# Check linearity by creating a scatterplot
+library(ggplot2)
+ggplot(heart, aes(x = RestingBP, y = MaxHR)) + geom_point() + geom_smooth(method = "lm")
+
+## Independenc 
+We can test this assumption using the Durbin-Watson test 
+or by examining a plot of residuals against the order of observations.
+#install.packages("lmtest")
+library(lmtest)
+# Fit the linear regression model
+model1 <- lm(MaxHR ~RestingBP, data = heart)
+# Perform the Durbin-Watson test
+dw_result <- dwtest(model1)
+print(dw_result)
+## The range of the statistic is between 0 and 4, 
+## where a value close to 2 suggests no significant autocorrelation.
+##Homoscedasticity
+# Create a plot of residuals vs. fitted values
+plot(model1)
+#The plot helps check for homoscedasticity (constant variance) and linearity.
+#If the points are randomly scattered around a horizontal line near zero, it suggests that the assumptions are met.
+## Normality of Residuals
+qqnorm(resid(model1))
+qqline(resid(model1))
+###Residual Analysis
+# Create diagnostic plots (residuals vs. fitted values, residuals vs. normal quantiles,
+#and a histogram of residuals)
+par(mfrow = c(2, 2))
+plot(model1)
+
+###Outlier Detection
+# Example: Influence and Cook's Distance
+# Calculate Cook's distance for each observation
+influential <- cooks.distance(model1)
+
+# Identify observations with Cook's distance exceeding a threshold 
+#(e.g., 3/n, where n is the number of observations)
+threshold <- 3 / length(heart$RestingBP)
+influential_obs <- which(influential > threshold)
+
+# Highlight influential observations in the scatterplot
+par(mfrow=c(1,1))
+plot(heart$MaxHR ~heart$RestingBP)
+points(heart$RestingBP[influential_obs], heart$MaxHR[influential_obs], col = "orange", 
+       pch = 19)
+## Multicollinearity
+model2<-lm(MaxHR~Age+RestingBP+Cholesterol, heart)
+library(car)
+vif_values <- vif(model2)
+## High VIF values indicate potential multicollinearity issues
+##A VIF value of 1 indicates no correlation between variables, while a VIF value of 5 or higher may indicate multicollinearity. 
+##A VIF value of 10 or higher may indicate serious multicollinearity. 
